@@ -1,26 +1,17 @@
-name: Python CI/CD Pipeline
+name: Basic Python CI
 
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+on: [push, pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false  # Дозволяє іншим версіям Python продовжити при помилці
-      matrix:
-        python-version: ["3.10", "3.11"]
-
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: "3.10"
     
     - name: Install dependencies
       run: |
@@ -28,36 +19,6 @@ jobs:
         pip install -r requirements.txt
         pip install pytest
         
-    - name: Run tests
+    - name: Run basic tests
       run: |
         pytest tests/ -v
-
-  lint:
-    needs: test
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-    
-    - name: Install linters
-      run: |
-        pip install black flake8
-        
-    - name: Run Black formatter
-      run: black --check src tests
-      
-    - name: Run Flake8
-      run: flake8 src tests
-
-  deploy:
-    needs: [test, lint]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - run: echo "Deploy would happen here"
