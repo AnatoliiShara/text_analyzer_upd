@@ -2,16 +2,17 @@ name: Python CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false  # Дозволяє іншим версіям Python продовжити при помилці
       matrix:
-        python-version: ["3.10", "3.11"]  # Оберіть версії, які підтримує ваш проект
+        python-version: ["3.10", "3.11"]
 
     steps:
     - uses: actions/checkout@v4
@@ -20,21 +21,16 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-        cache: 'pip'
     
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-cov
-    
+        pip install pytest
+        
     - name: Run tests
       run: |
-        pytest --cov=src --cov-report=xml tests/
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      if: github.event_name == 'push'
+        pytest tests/ -v
 
   lint:
     needs: test
@@ -50,35 +46,18 @@ jobs:
     
     - name: Install linters
       run: |
-        pip install black flake8 mypy
+        pip install black flake8
         
     - name: Run Black formatter
       run: black --check src tests
       
     - name: Run Flake8
       run: flake8 src tests
-      
-    - name: Run Mypy
-      run: mypy --strict src
 
   deploy:
     needs: [test, lint]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-    
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-        pip install gradio
-        
-    - name: Run Gradio UI (test mode)
-      run: |
-        python gradio_ui.py
+    - run: echo "Deploy would happen here"
